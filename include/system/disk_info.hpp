@@ -6,11 +6,11 @@
 
 struct DiskInfo {
   std::string mount_point;
-  uint64_t total_bytes;
-  uint64_t free_bytes;
-  uint64_t available_bytes;
-  uint64_t used_bytes;
-  double usage_percent;
+  uint64_t total_bytes = 0;
+  uint64_t free_bytes = 0;
+  uint64_t available_bytes = 0;
+  uint64_t used_bytes = 0;
+  double usage_percent = 0.0;
 };
 
 class DiskInfoProvider {

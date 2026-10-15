@@ -9,7 +9,7 @@ struct SystemInfo {
   std::string os_version;
   std::string kernel_version;
   std::string arch;
-  std::chrono::seconds uptime;
+  std::chrono::seconds uptime{0};
 };
 
 class SystemInfoProvider {

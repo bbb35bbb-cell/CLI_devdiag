@@ -2,11 +2,16 @@
 #include <chrono>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 void Logger::Log(LogLevel level, const std::string& message) {
+  if (level == LogLevel::Debug && !verbose_) {
+    return;
+  }
   std::string s = FormatMessage(level, message);
 
-  std::cout << s << std::endl;
+  (level == LogLevel::Error || level == LogLevel::Warning ? std::cerr : std::cout)
+      << s << std::endl;
 }
 
 void Logger::Debug(const std::string& message) {
@@ -74,4 +79,3 @@ std::string Logger::GetTimestamp() const {
   stream << std::put_time(tm, "%Y-%m-%d %X");
   return stream.str();
 }
-

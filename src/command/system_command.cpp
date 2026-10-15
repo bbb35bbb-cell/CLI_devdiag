@@ -8,6 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <filesystem>
 
 namespace {
 std::string FormatDouble(double value) {
@@ -34,7 +35,11 @@ int SystemCommand::Execute(const std::vector<std::string>& args) {
   SystemInfo sys_info = sys_info_provider.GetSystemInfo();
   CpuInfo cpu_info = cpu_info_provider.GetCpuInfo();
   MemoryInfo mem_info = mem_info_provider.GetMemInfo();
-  DiskInfo disk_info = disk_info_provider.GetDiskInfo("/");
+  std::filesystem::path disk_path = "/";
+  for (std::size_t index = 1; index + 1 < args.size(); ++index) {
+    if (args[index] == "--path") disk_path = args[index + 1];
+  }
+  DiskInfo disk_info = disk_info_provider.GetDiskInfo(disk_path);
 
   std::string info_kind = args[0];
 
@@ -59,12 +64,12 @@ int SystemCommand::Execute(const std::vector<std::string>& args) {
       "Model Name     : " + cpu_info.cpu_model + "\n"
       "Logical CPUs   : " + std::to_string(cpu_info.cpu_core_count) + "\n"
       "CPU Usage      : " + FormatDouble(cpu_info.cpu_usage) + " %\n"
-      "CPU Frequency  : " + FormatDouble(cpu_info.cpu_freqency) + " MHz\n"
+      "CPU Frequency  : " + FormatDouble(cpu_info.cpu_frequency) + " MHz\n"
       "\n"
       "Load Average\n"
-      "  1 min        : " + FormatDouble(cpu_info.load_avg[0]) + "\n"
-      "  5 min        : " + FormatDouble(cpu_info.load_avg[1]) + "\n"
-      "  15 min       : " + FormatDouble(cpu_info.load_avg[2]) + "\n"
+      "  1 min        : " + FormatDouble(cpu_info.load_average[0]) + "\n"
+      "  5 min        : " + FormatDouble(cpu_info.load_average[1]) + "\n"
+      "  15 min       : " + FormatDouble(cpu_info.load_average[2]) + "\n"
       "============================================";
     logger.Log(LogLevel::Info, msg);
   }else if(info_kind == "memory") {
@@ -72,11 +77,11 @@ int SystemCommand::Execute(const std::vector<std::string>& args) {
       "============================================\n"
       "Memory Information\n"
       "============================================\n"
-      "Total          : " + FormatDouble(KiBToGiB(mem_info.total_memory)) + " GB\n"
-      "Used           : " + FormatDouble(KiBToGiB(mem_info.used_memory)) + " GB\n"
-      "Available      : " + FormatDouble(KiBToGiB(mem_info.available_memory)) + " GB\n"
-      "Free           : " + FormatDouble(KiBToGiB(mem_info.free_memory)) + " GB\n"
-      "Usage          : " + FormatDouble(mem_info.memory_usage) + "%\n"
+      "Total          : " + FormatDouble(KiBToGiB(mem_info.total_kib)) + " GiB\n"
+      "Used           : " + FormatDouble(KiBToGiB(mem_info.used_kib)) + " GiB\n"
+      "Available      : " + FormatDouble(KiBToGiB(mem_info.available_kib)) + " GiB\n"
+      "Free           : " + FormatDouble(KiBToGiB(mem_info.free_kib)) + " GiB\n"
+      "Usage          : " + FormatDouble(mem_info.usage_percent) + "%\n"
       "============================================";
     logger.Log(LogLevel::Info, msg);
   }else if(info_kind == "disk") {

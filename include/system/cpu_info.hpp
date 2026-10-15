@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <vector>
+#include <cstdint>
 
 struct CpuTimes {
   uint64_t user;
@@ -29,8 +30,8 @@ struct CpuTaskLoadInfo {
 
 struct CpuInfo {
   double cpu_usage;
-  double cpu_freqency;
-  std::vector<double> load_avg;
+  double cpu_frequency;
+  std::vector<double> load_average;
   std::string cpu_model;
   uint32_t cpu_core_count;
 };

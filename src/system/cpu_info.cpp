@@ -1,7 +1,9 @@
 #include "cpu_info.hpp"
-#include "unistd.h"
+
+#include <chrono>
 #include <fstream>
 #include <sstream>
+#include <thread>
 
 /*
 CPU Information
@@ -19,7 +21,7 @@ Load Average
 
 namespace {
 
-CpuTimes ReadCpuTimesValue() {
+CpuTimes ReadCpuTimes() {
   CpuTimes cpu_times{};
   std::ifstream cpu_stat("/proc/stat");
   std::string line;
@@ -27,11 +29,7 @@ CpuTimes ReadCpuTimesValue() {
   while (std::getline(cpu_stat, line)) {
     std::istringstream line_stream(line);
     std::string cpu_label;
-
-    if (!(line_stream >> cpu_label) || cpu_label != "cpu") {
-      continue;
-    }
-
+    if (!(line_stream >> cpu_label) || cpu_label != "cpu") continue;
     line_stream >> cpu_times.user
                 >> cpu_times.nice
                 >> cpu_times.system
@@ -47,11 +45,9 @@ CpuTimes ReadCpuTimesValue() {
 }
 
 double CalCpuUsage() {
-  CpuTimes before = ReadCpuTimesValue();
-
-  sleep(1);
-
-  CpuTimes after = ReadCpuTimesValue();
+  CpuTimes before = ReadCpuTimes();
+  std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  CpuTimes after = ReadCpuTimes();
 
   uint64_t before_total = before.user + before.nice + before.system + before.idle + 
                           before.iowait + before.irq + before.softirq + before.steal;
@@ -64,13 +60,13 @@ double CalCpuUsage() {
     return 0.0;
   }
 
-  double usage = (1.0 - static_cast<double>(idle_delta) / total_delta) * 100.0;
-
-  return usage;
+  if (idle_delta > total_delta) return 0.0;
+  return (1.0 - static_cast<double>(idle_delta) /
+          static_cast<double>(total_delta)) * 100.0;
 }
 
 CpuHardwareInfo ReadCpuInfo() {
-  CpuHardwareInfo info {};
+  CpuHardwareInfo info{};
   std::ifstream cpu_info("/proc/cpuinfo");
   std::string line;
 
@@ -94,12 +90,12 @@ CpuHardwareInfo ReadCpuInfo() {
       value = value.substr(value_first);
     }
 
-    if (key == "model name" && info.model_name.empty()) {
+    if ((key == "model name" || key == "Processor") && info.model_name.empty()) {
       info.model_name = value;
     } else if (key == "processor") {
       ++info.cpu_count;
     } else if (key == "cpu MHz" && info.cpu_mhz == 0.0) {
-      info.cpu_mhz = std::stod(value);
+      try { info.cpu_mhz = std::stod(value); } catch (const std::exception&) { }
     }
   }
 
@@ -132,12 +128,13 @@ CpuInfo CpuInfoProvider::GetCpuInfo() const {
   CpuTaskLoadInfo load_info = ReadTaskLoadInfo();
 
   info.cpu_usage = CalCpuUsage();
-  info.cpu_freqency = hw_info.cpu_mhz;
-  info.load_avg.push_back(load_info.load_avg_1min);
-  info.load_avg.push_back(load_info.load_avg_5min);
-  info.load_avg.push_back(load_info.load_avg_15min);
+  info.cpu_frequency = hw_info.cpu_mhz;
+  info.load_average.push_back(load_info.load_avg_1min);
+  info.load_average.push_back(load_info.load_avg_5min);
+  info.load_average.push_back(load_info.load_avg_15min);
   info.cpu_model = hw_info.model_name;
   info.cpu_core_count = hw_info.cpu_count;
 
+  if (info.cpu_core_count == 0) info.cpu_core_count = 1;
   return info;
 }

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <fstream>
+#include <sstream>
 
 namespace {
 
@@ -11,33 +12,30 @@ MemoryInfo ReadMemValue() {
   std::string line;
 
   while(std::getline(mem_info, line)) {
-    std::size_t seperator = line.find(':');
-    if(seperator == std::string::npos) {
+    std::size_t separator = line.find(':');
+    if(separator == std::string::npos) {
       continue;
     }
 
-    std::string key = line.substr(0, seperator);
-    std::string value = line.substr(seperator+1);
-    std::size_t value_first = value.find_first_not_of(" \t");
-    std::size_t value_last = value.rfind(' ');
-    if(value_first == std::string::npos || value_last == std::string::npos) {
-      continue;
-    }
-
-    value = value.substr(value_first, value_last - value_first);
+    std::string key = line.substr(0, separator);
+    std::istringstream value_stream(line.substr(separator + 1));
+    uint64_t value = 0;
+    value_stream >> value;
 
     if(key == "MemTotal") {
-      info.total_memory = std::stoull(value);
+      info.total_kib = value;
     }else if(key == "MemAvailable") {
-      info.available_memory = std::stoull(value);
+      info.available_kib = value;
     }else if(key == "MemFree") {
-      info.free_memory = std::stoull(value);
+      info.free_kib = value;
     }
 
-    info.used_memory = info.total_memory - info.available_memory;
-    info.memory_usage = static_cast<double>(info.used_memory) / 
-                        static_cast<double>(info.total_memory) * 100.0;
   }
+
+  if (info.available_kib > info.total_kib) info.available_kib = info.total_kib;
+  info.used_kib = info.total_kib - info.available_kib;
+  info.usage_percent = info.total_kib == 0 ? 0.0 :
+      static_cast<double>(info.used_kib) / static_cast<double>(info.total_kib) * 100.0;
 
   return info;
 }

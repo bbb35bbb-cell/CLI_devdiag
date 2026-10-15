@@ -1,8 +1,6 @@
 #pragma once
 
 #include "command.hpp"
-#include <vector>
-#include <string>
 
 class SystemCommand : public ICommand {
 public:

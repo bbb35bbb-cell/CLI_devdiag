@@ -3,11 +3,11 @@
 #include <cstdint>
 
 struct MemoryInfo {
-  uint64_t total_memory;
-  uint64_t used_memory;
-  uint64_t available_memory;
-  uint64_t free_memory;
-  double memory_usage;
+  uint64_t total_kib = 0;
+  uint64_t used_kib = 0;
+  uint64_t available_kib = 0;
+  uint64_t free_kib = 0;
+  double usage_percent = 0.0;
 };
 
 class MemoryInfoProvider {
